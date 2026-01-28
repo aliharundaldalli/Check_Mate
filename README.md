@@ -1,125 +1,119 @@
-# <p align="center"><img src="assets/images/logo.png" alt="CheckMate Logo" width="180"></p>
+<p align="center"><img src="assets/images/logo.png" alt="CheckMate Logo" width="180"></p>
 
 <h1 align="center">CheckMate LMS</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PHP-7.4+-777bb4.svg?style=for-the-badge&logo=php" alt="PHP Version">
-  <img src="https://img.shields.io/badge/MySQL-8.0+-4479A1.svg?style=for-the-badge&logo=mysql" alt="MySQL Version">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg?style=for-the-badge" alt="Maintained">
+<img src="https://img.shields.io/badge/PHP-7.4+-777bb4.svg?style=for-the-badge&logo=php" alt="PHP Version">
+<img src="https://img.shields.io/badge/MySQL-8.0+-4479A1.svg?style=for-the-badge&logo=mysql" alt="MySQL Version">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/AI-Gemini%2520Flash-orange.svg%3Fstyle%3Dfor-the-badge%26logo%3Dgoogle-gemini" alt="AI Powered">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Security-Two--Phase%2520QR-red.svg%3Fstyle%3Dfor-the-badge" alt="Security">
 </p>
-
----
 
 <p align="center">
-  <b>CheckMate</b> is a professional, secure, and user-friendly university attendance management system. 
-  Leveraging dynamic QR codes and two-phase security, it ensures physical presence while providing powerful tools for course management, assignments, and exams.
+<b>CheckMate</b> is an AI-powered, professional University Attendance and Learning Management System (LMS).
+Beyond traditional tracking, it utilizes <b>Two-Phase Dynamic Authentication</b> to guarantee physical presence and leverages <b>Google Gemini AI</b> for automated academic success analysis.
 </p>
 
----
+🚀 Key Features
 
-![Open Graph Image](assets/images/og-image.png)
+🔐 Two-Phase Smart Attendance
 
-## ✨ Features
+Designed to eliminate attendance fraud (proxy attendance):
 
-### 🔐 Two-Phase Attendance Security
-*   **Phase 1**: Static 8-digit key provided by the teacher.
-*   **Phase 2**: Dynamic QR code/Secondary key that rotates every 15 seconds.
-*   *Guarantees students are physically present in the classroom.*
+Phase 1 (Pre-Entry): Students enter an 8-digit static key provided by the instructor to access the session.
 
-### 👥 Multi-Role Support
-*   **Admin Dashboard**: Statistics, user management (Teacher/Student), faculty/department setup, and site-wide announcements.
-*   **Teacher Panel**: Start dynamic sessions, manage courses, create quizzes with real-time reporting, and handle timed assignments.
-*   **Student Hub**: Mobile-optimized interface for attendance, submission tracking, exam participation, and material access.
+Phase 2 (Live Verification): During the lecture, a Dynamic QR Code and a secondary key rotate every 15 seconds on the screen. Students must scan this code or enter the key in real-time to be marked as "Present."
 
-### 📊 Advanced Reporting & Alerts
-*   Detailed absenteeism tracking with visual charts (%25 limit warnings).
-*   Bulk export options (Excel, PDF) for attendance lists.
-*   Automated email notifications via SMTP.
+🤖 AI-Powered Academic Assistant (Gemini AI)
 
-### 🔒 Security First
-*   **CSRF & XSS Protection**: All forms are secured against common web attacks.
-*   **Secure Multi-File Upload**: MIME-type validation and strictly enforced file extensions for assignments and materials.
-*   **Brute Force Protection**: Login attempt limiting and rate control.
+The system integrates Google Gemini API to automate and enhance the learning process:
 
----
+AI Quiz Generator: Automatically creates quizzes based on uploaded course materials.
 
-## 🚀 Getting Started
+Automated Grading: AI evaluates student answers, providing instant feedback and scoring.
 
-### Prerequisites
-*   **PHP**: 7.4 or higher
-*   **Database**: MySQL 5.7+ / 8.0+
-*   **Dependency Manager**: Composer
-*   **Web Server**: Apache or Nginx
+Pedagogical Reporting: Analyzes class-wide performance. It identifies specific questions where students struggled and suggests topics the instructor should revisit.
 
-### Installation
+👥 Comprehensive Management Panels
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/aliharundaldalli/Check_Mate.git
-    cd Check_Mate
-    ```
+Admin Dashboard:
 
-2.  **Install Dependencies**
-    ```bash
-    composer install
-    ```
+Bulk Import: Seamlessly add thousands of students and teachers via CSV upload.
 
-3.  **Configuration**
-    *   **Environment**: Copy the example environment file.
-        ```bash
-        cp .env.example .env
-        ```
-        Update `.env` with your database credentials and `GEMINI_API_KEY`.
-    *   **App Config**: Copy the example config file.
-        ```bash
-        cp config/config.example.php config/config.php
-        ```
-        Set your `SITE_URL` and verify database settings in `config.php`.
+System Control: Manage SMTP settings, faculty/department structures, and site-wide announcements.
 
-4.  **Database Setup**
-    *   Create a MySQL database (e.g., `check_mate_db`).
-    *   Import the provided SQL schema (if available) or create tables using the provided logic.
+Teacher Portal:
 
-5.  **Permissions**
-    ```bash
-    chmod -R 755 uploads logs
-    ```
+Start dynamic attendance sessions.
 
----
+Upload course materials and manage assignments.
 
-## 🛠️ Tech Stack & Librariers
+Send mass notifications to students.
 
-*   **Backend**: PHP (OOP Architecture), MySQL (PDO), PHPMailer.
-*   **Frontend**: Bootstrap 5, FontAwesome 6, Vanilla JS.
-*   **Reporting**: PhpSpreadsheet, TCPDF.
-*   **Tools**: Endroid QR Code.
+Access AI-generated performance reports.
 
----
+Student Hub:
 
-## 📁 Project Structure
+Mobile-optimized interface for scanning QR codes.
 
-```text
+Track attendance limits with visual charts (25% absenteeism warning).
+
+Submit assignments and participate in AI-driven exams.
+
+📊 Communication & Alerts
+
+Messaging System: Real-time communication channel between teachers and students.
+
+Automated Notifications: System-wide alerts and email notifications powered by SMTP.
+
+Reporting: Export attendance and grade lists in PDF or Excel format.
+
+🛠️ Tech Stack & Libraries
+
+Backend: PHP 8.x (OOP Architecture), MySQL (PDO)
+
+AI Engine: Google Gemini Flash API
+
+Frontend: Bootstrap 5, Vanilla JavaScript, FontAwesome 6
+
+Email & Export: PHPMailer, PhpSpreadsheet, TCPDF
+
+Security: CSRF/XSS protection, Brute Force protection, and MIME-type validation for secure file uploads.
+
+📁 Project Structure
+
 check-mate/
-├── admin/       # Administrative management portal
-├── teacher/     # Faculty & Course management tools
-├── student/     # Student portal (Attendance & Submissions)
-├── config/      # System configuration & environment loaders
-├── includes/    # Core logic, classes (Auth, DB, Mail), and components
-├── assets/      # Public assets (UI, Brand, JS/CSS)
-├── uploads/     # User-submitted content (Ignored by Git)
-└── vendor/      # Third-party libraries (Composer)
-```
+├── admin/       # Administrative portal (CSV Import, SMTP Setup, User Management)
+├── teacher/     # Instructor tools (Attendance, AI Quiz, Reporting)
+├── student/     # Student portal (QR Scan, Assignment Submission)
+├── includes/    # Core logic (AI Manager, Auth, Database, Mailer classes)
+├── config/      # Environment variables and system configurations
+├── assets/      # UI components, CSS/JS, and branding
+└── uploads/     # User-generated content (Ignored by Git for security)
 
----
 
-## 📜 License & Author
+⚙️ Installation
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Clone & Install:
 
-**Author**: [Ali Harun Daldallı](https://github.com/aliharundaldalli)  
-**Organization**: AhdaKade Team  
-**Contact**: info@ahdakade.com
+git clone [https://github.com/aliharundaldalli/Check_Mate.git](https://github.com/aliharundaldalli/Check_Mate.git)
+composer install
 
----
-<p align="center">Made with ❤️ for Academic Excellence.</p>
+
+Environment: Update .env with your GEMINI_API_KEY and Database credentials.
+
+SMTP Configuration: Navigate to the Admin Panel -> Settings to configure your mail server for notifications.
+
+Permissions: Ensure uploads/ and logs/ directories are writable.
+
+📜 License & Author
+
+Distributed under the MIT License.
+
+Author: Ali Harun Daldallı
+
+Organization: Ahd Akademi 
+
+Contact: info@ahdakade.com
+
+<p align="center">Built with ❤️ for Academic Excellence.</p>
