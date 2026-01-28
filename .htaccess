@@ -1,0 +1,43 @@
+# Check Mate - Apache Configuration
+# Guvenlik, performans ve URL yeniden yazma
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Localhost'ta alt klasör (check_mate) için ayarlandı.
+    RewriteBase /check_mate/
+    Options -MultiViews
+
+    # =============================================
+    # URL HANDLERS
+    # =============================================
+
+    # .php uzantisini gizle (SEO)
+    RewriteCond %{REQUEST_METHOD} !POST
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?]
+    RewriteRule ^ %{REQUEST_SCHEME}://%{HTTP_HOST}/check_mate/%1 [R=301,L]
+
+    # .php ekle (Dahili yonlendirme)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME}\.php -f
+    RewriteRule ^/?(.+)$ $1.php [L]
+
+    # Hata sayfalari (Mevcut yapıya uygun olarak ayarlandı)
+    ErrorDocument 403 /check_mate/error.php?code=403
+    ErrorDocument 404 /check_mate/error.php?code=404
+</IfModule>
+
+# =============================================
+# GUVENLIK AYARLARI
+# =============================================
+
+# Dizin listelemeyi kapat
+Options -Indexes
+
+# Hassas dosyalara erisimi engelle
+<FilesMatch "(config\.php|db\.php|functions\.php|init\.php|\.sql|\.log|\.env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Not: <Directory> bloklari burada kullanilmamalidir.

@@ -1,0 +1,33 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Configuration & Secrets (CRITICAL)
+.env
+config/config.php
+config/database.php
+
+# Dependencies
+/vendor/
+composer.lock
+
+# User Content
+/uploads/*
+!/uploads/.htaccess
+!/uploads/index.php
+!/uploads/default_profile.png
+
+# Assets (Keep logos and UI icons)
+!/assets/images/logo.png
+!/assets/images/og-image.png
+
+# Logs and Backups
+/logs/*.log
+/logs/last_cron_run.txt
+/backups/
+error_log
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
