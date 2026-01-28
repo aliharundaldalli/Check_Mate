@@ -5,8 +5,6 @@
 <p align="center">
 <img src="https://img.shields.io/badge/PHP-7.4+-777bb4.svg?style=for-the-badge&logo=php" alt="PHP Version">
 <img src="https://img.shields.io/badge/MySQL-8.0+-4479A1.svg?style=for-the-badge&logo=mysql" alt="MySQL Version">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/AI-Gemini%2520Flash-orange.svg%3Fstyle%3Dfor-the-badge%26logo%3Dgoogle-gemini" alt="AI Powered">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Security-Two--Phase%2520QR-red.svg%3Fstyle%3Dfor-the-badge" alt="Security">
 </p>
 
 <p align="center">
