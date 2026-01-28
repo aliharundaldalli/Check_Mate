@@ -1,117 +1,101 @@
-<p align="center"><img src="assets/images/logo.png" alt="CheckMate Logo" width="180"></p>
+<p align="center">
+  <img src="assets/images/logo.png" alt="CheckMate Logo" width="180">
+</p>
 
 <h1 align="center">CheckMate LMS</h1>
 
 <p align="center">
-<img src="https://img.shields.io/badge/PHP-7.4+-777bb4.svg?style=for-the-badge&logo=php" alt="PHP Version">
-<img src="https://img.shields.io/badge/MySQL-8.0+-4479A1.svg?style=for-the-badge&logo=mysql" alt="MySQL Version">
+  <img src="https://img.shields.io/badge/PHP-8.x-777bb4?style=for-the-badge&logo=php">
+  <img src="https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql">
+  <img src="https://img.shields.io/badge/AI-Gemini%20Flash-orange?style=for-the-badge&logo=google">
+  <img src="https://img.shields.io/badge/Security-Two--Phase%20QR-red?style=for-the-badge">
 </p>
 
 <p align="center">
-<b>CheckMate</b> is an AI-powered, professional University Attendance and Learning Management System (LMS).
-Beyond traditional tracking, it utilizes <b>Two-Phase Dynamic Authentication</b> to guarantee physical presence and leverages <b>Google Gemini AI</b> for automated academic success analysis.
+  <strong>CheckMate</strong> is an AI-powered University Attendance and Learning Management System (LMS)  
+  designed to ensure real physical presence in classrooms and provide intelligent academic insights  
+  using <strong>Google Gemini AI</strong>.
 </p>
 
-🚀 Key Features
+---
 
-🔐 Two-Phase Smart Attendance
+## 🚀 Key Features
 
-Designed to eliminate attendance fraud (proxy attendance):
+### 🔐 Two-Phase Smart Attendance System
 
-Phase 1 (Pre-Entry): Students enter an 8-digit static key provided by the instructor to access the session.
+Built to prevent proxy attendance and ensure students are physically present in the classroom.
 
-Phase 2 (Live Verification): During the lecture, a Dynamic QR Code and a secondary key rotate every 15 seconds on the screen. Students must scan this code or enter the key in real-time to be marked as "Present."
+**Phase 1 — Session Access**  
+Students enter a static 8-digit session key provided by the instructor to join the class session.
 
-🤖 AI-Powered Academic Assistant (Gemini AI)
+**Phase 2 — Live Verification**  
+A dynamic QR code and rotating verification key are displayed on the classroom screen and refreshed every 15 seconds.  
+Students must scan the live code to complete attendance validation.
 
-The system integrates Google Gemini API to automate and enhance the learning process:
+---
 
-AI Quiz Generator: Automatically creates quizzes based on uploaded course materials.
+### 🤖 AI-Powered Academic Intelligence (Gemini API)
 
-Automated Grading: AI evaluates student answers, providing instant feedback and scoring.
+Powered by Google Gemini Flash to transform educational data into actionable insights.
 
-Pedagogical Reporting: Analyzes class-wide performance. It identifies specific questions where students struggled and suggests topics the instructor should revisit.
+- **AI Quiz Generator** – Automatically creates quizzes from uploaded course materials  
+- **Automated Grading & Feedback** – Evaluates student answers and provides instant feedback  
+- **Classroom Performance Analytics** – Detects difficult topics and suggests areas for re-teaching
 
-👥 Comprehensive Management Panels
+---
 
-Admin Dashboard:
+### 📋 Administration & Classroom Management
 
-Bulk Import: Seamlessly add thousands of students and teachers via CSV upload.
+- **Bulk User Import** – Add students and staff via CSV upload  
+- **Communication Hub** – SMTP-based email notifications and internal messaging  
+- **Assignment Management** – Secure file upload and distribution  
+- **Absenteeism Monitoring** – Visual statistics and automated warning alerts
 
-System Control: Manage SMTP settings, faculty/department structures, and site-wide announcements.
+---
 
-Teacher Portal:
+## 🛠️ Technology Stack
 
-Start dynamic attendance sessions.
+- **Backend:** PHP 8.x (OOP), MySQL (PDO)  
+- **AI Engine:** Google Gemini Flash API  
+- **Frontend:** Bootstrap 5, Vanilla JavaScript, FontAwesome 6  
+- **Security:** CSRF & XSS Protection, Brute-force Protection, Secure File Upload  
+- **Libraries:** PHPMailer, Endroid QR Code, PhpSpreadsheet, TCPDF
 
-Upload course materials and manage assignments.
+---
 
-Send mass notifications to students.
+## 📁 Project Structure
 
-Access AI-generated performance reports.
-
-Student Hub:
-
-Mobile-optimized interface for scanning QR codes.
-
-Track attendance limits with visual charts (25% absenteeism warning).
-
-Submit assignments and participate in AI-driven exams.
-
-📊 Communication & Alerts
-
-Messaging System: Real-time communication channel between teachers and students.
-
-Automated Notifications: System-wide alerts and email notifications powered by SMTP.
-
-Reporting: Export attendance and grade lists in PDF or Excel format.
-
-🛠️ Tech Stack & Libraries
-
-Backend: PHP 8.x (OOP Architecture), MySQL (PDO)
-
-AI Engine: Google Gemini Flash API
-
-Frontend: Bootstrap 5, Vanilla JavaScript, FontAwesome 6
-
-Email & Export: PHPMailer, PhpSpreadsheet, TCPDF
-
-Security: CSRF/XSS protection, Brute Force protection, and MIME-type validation for secure file uploads.
-
-📁 Project Structure
-
+```text
 check-mate/
-├── admin/       # Administrative portal (CSV Import, SMTP Setup, User Management)
-├── teacher/     # Instructor tools (Attendance, AI Quiz, Reporting)
-├── student/     # Student portal (QR Scan, Assignment Submission)
-├── includes/    # Core logic (AI Manager, Auth, Database, Mailer classes)
-├── config/      # Environment variables and system configurations
-├── assets/      # UI components, CSS/JS, and branding
-└── uploads/     # User-generated content (Ignored by Git for security)
+├── admin/        # Management portal (CSV import, SMTP, user management)
+├── teacher/      # Faculty tools (attendance, AI quizzes, analytics)
+├── student/      # Student portal (mobile-friendly attendance, assignments)
+├── config/       # Environment and database configuration
+├── includes/     # Core logic (auth, AI, mailer, database)
+├── assets/       # UI assets and scripts
+└── uploads/      # User files (ignored by Git)
+````
 
+---
 
-⚙️ Installation
+## ⚙️ Configuration
 
-Clone & Install:
+* **Gemini API:** Add your API key to `.env` or `config.php`
+* **SMTP:** Configure mail server settings in the Admin Panel
+* **CSV Import:** Use the provided templates to bulk upload users
 
-git clone [https://github.com/aliharundaldalli/Check_Mate.git](https://github.com/aliharundaldalli/Check_Mate.git)
-composer install
+---
 
+## 📜 License
 
-Environment: Update .env with your GEMINI_API_KEY and Database credentials.
+This project is licensed under the MIT License.
 
-SMTP Configuration: Navigate to the Admin Panel -> Settings to configure your mail server for notifications.
+---
 
-Permissions: Ensure uploads/ and logs/ directories are writable.
+## 👨‍💻 Author & Organization
 
-📜 License & Author
+**Author:** Ali Harun Daldallı
+**Organization:** Ahd Akademi 
+**Contact:** [info@ahdakade.com](mailto:info@ahdakade.com)
 
-Distributed under the MIT License.
-
-Author: Ali Harun Daldallı
-
-Organization: Ahd Akademi 
-
-Contact: info@ahdakade.com
-
-<p align="center">Built with ❤️ for Academic Excellence.</p>
+<p align="center">Built with ❤️ for Academic Excellence</p>
