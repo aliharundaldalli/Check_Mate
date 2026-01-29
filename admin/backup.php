@@ -132,6 +132,73 @@ class BackupSystem {
             ];
         }
     }
+
+    // Schema Backup (Structure Only)
+    public function createSchemaBackup() {
+        try {
+            $backup_file = $this->backup_dir . 'schema_backup_' . date('Y-m-d_H-i-s') . '.sql';
+            
+            $tables = [];
+            $result = $this->db->query("SHOW TABLES");
+            while ($row = $result->fetch(PDO::FETCH_NUM)) {
+                $tables[] = $row[0];
+            }
+            
+            $sql_dump = "-- Database Schema (Structure Only)\n";
+            $sql_dump .= "-- Generated on: " . date('Y-m-d H:i:s') . "\n";
+            $sql_dump .= "-- AhdaKade Yoklama Sistemi\n\n";
+            
+            $sql_dump .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+            $sql_dump .= "START TRANSACTION;\n";
+            $sql_dump .= "SET time_zone = \"+00:00\";\n\n";
+            
+            foreach ($tables as $table) {
+                // Get structure
+                $create_table = $this->db->query("SHOW CREATE TABLE `$table`")->fetch(PDO::FETCH_ASSOC);
+                $sql_dump .= "\n\n-- Table structure for table `$table`\n";
+                $sql_dump .= "DROP TABLE IF EXISTS `$table`;\n";
+                $sql_dump .= $create_table['Create Table'] . ";\n";
+                
+                // Optionally dump configuration/static data only
+                if ($table === 'site_settings') {
+                     $sql_dump .= "\n-- Default Data for `$table`\n";
+                     $rows = $this->db->query("SELECT * FROM `$table`");
+                     if ($rows->rowCount() > 0) {
+                        $sql_dump .= "INSERT INTO `$table` VALUES ";
+                        $first_row = true;
+                        while ($row = $rows->fetch(PDO::FETCH_NUM)) {
+                            if (!$first_row) $sql_dump .= ",\n";
+                            $first_row = false;
+                            $sql_dump .= "(";
+                            for ($i = 0; $i < count($row); $i++) {
+                                if ($i > 0) $sql_dump .= ", ";
+                                $sql_dump .= $row[$i] === null ? 'NULL' : "'" . addslashes($row[$i]) . "'";
+                            }
+                            $sql_dump .= ")";
+                        }
+                        $sql_dump .= ";\n";
+                     }
+                }
+            }
+            
+            $sql_dump .= "\nCOMMIT;\n";
+            
+            file_put_contents($backup_file, $sql_dump);
+            
+            return [
+                'success' => true,
+                'file' => basename($backup_file),
+                'size' => $this->formatBytes(filesize($backup_file)),
+                'path' => $backup_file
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
     
     // Dosya sistemi yedeği al
     public function createFileBackup($include_uploads = true) {
@@ -325,6 +392,8 @@ class BackupSystem {
             return 'Dosyalar';
         } elseif (strpos($filename, 'full_') === 0) {
             return 'Tam Yedek';
+        } elseif (strpos($filename, 'schema_') === 0) {
+            return 'Şema (Yapı)';
         }
         return 'Bilinmeyen';
     }
@@ -349,6 +418,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'full':
             $backup_result = $backup_system->createFullBackup($include_uploads);
+            break;
+        case 'schema':
+            $backup_result = $backup_system->createSchemaBackup();
             break;
     }
     
@@ -427,7 +499,14 @@ include '../includes/components/admin_header.php';
                                 <input class="form-check-input" type="radio" name="backup_type" id="files" value="files">
                                 <label class="form-check-label" for="files">
                                     <i class="fas fa-folder me-1"></i>Sadece Dosyalar
-                                    <small class="text-muted d-block">PHP dosyları ve ayarlar</small>
+                                    <small class="text-muted d-block">PHP dosyaları ve ayarlar</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="backup_type" id="schema" value="schema">
+                                <label class="form-check-label" for="schema">
+                                    <i class="fas fa-code me-1"></i>Sadece Şema (Yapı)
+                                    <small class="text-muted d-block">Boş veritabanı yapısı (Deploy için)</small>
                                 </label>
                             </div>
                             <div class="form-check">
@@ -471,6 +550,7 @@ include '../includes/components/admin_header.php';
                             <li><strong>Veritabanı Yedeği:</strong> Tüm kullanıcı verileri, dersler, yoklama kayıtları</li>
                             <li><strong>Dosya Yedeği:</strong> PHP kodları, ayar dosyaları, tema dosyaları</li>
                             <li><strong>Tam Yedek:</strong> Her şey dahil (önerilen seçenek)</li>
+                            <li><strong>Şema (Yapı):</strong> Sadece veritabanı tabloları (veri içermez)</li>
                             <li><strong>Boyut Limiti:</strong> Tek dosya maksimum 50MB</li>
                             <li><strong>Saklama:</strong> Yedekler sunucuda /backups/ klasöründe saklanır</li>
                         </ul>
@@ -525,7 +605,8 @@ include '../includes/components/admin_header.php';
                                             <td>
                                                 <span class="badge bg-<?php 
                                                     echo $backup['type'] === 'Tam Yedek' ? 'success' : 
-                                                        ($backup['type'] === 'Veritabanı' ? 'primary' : 'info'); 
+                                                        ($backup['type'] === 'Veritabanı' ? 'primary' : 
+                                                        ($backup['type'] === 'Şema (Yapı)' ? 'secondary' : 'info')); 
                                                 ?>">
                                                     <?php echo htmlspecialchars($backup['type']); ?>
                                                 </span>
@@ -578,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     radioButtons.forEach(radio => {
         radio.addEventListener('change', function() {
-            if (this.value === 'database') {
+            if (this.value === 'database' || this.value === 'schema') {
                 uploadCheckbox.disabled = true;
                 uploadCheckbox.checked = false;
             } else {
