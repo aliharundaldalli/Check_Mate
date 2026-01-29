@@ -52,7 +52,8 @@ try {
               FROM quiz_submissions qs 
               JOIN users u ON qs.student_id = u.id 
               WHERE qs.quiz_id = :qid 
-              ORDER BY qs.score DESC";
+              ORDER BY qs.score DESC 
+              LIMIT 1000";
     $stmt = $db->prepare($query);
     $stmt->execute([':qid' => $quiz_id]);
     $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -66,7 +67,7 @@ include '../includes/components/admin_header.php';
 ?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Sonuçlar: <?php echo htmlspecialchars($quiz['title']); ?></h1>
+    <h1 class="h2">Sonuçlar: <?php echo htmlspecialchars($quiz['title']); ?> <span class="badge bg-secondary fs-6 align-middle ms-2"><?php echo count($submissions); ?> Toplam</span></h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="quizzes.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Listeye Dön

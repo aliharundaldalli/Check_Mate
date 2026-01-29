@@ -93,8 +93,26 @@ include '../includes/components/teacher_header.php';
                             
                             <?php if ($submission['ai_general_feedback']): ?>
                                 <div class="alert alert-info bg-light border-0 mb-0">
-                                    <h6 class="text-info"><i class="fas fa-robot me-2"></i>AI Genel Değerlendirmesi</h6>
-                                    <p class="mb-0 text-dark"><?php echo nl2br(htmlspecialchars($submission['ai_general_feedback'])); ?></p>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="text-info m-0"><i class="fas fa-robot me-2"></i>AI Genel Değerlendirmesi</h6>
+                                        <button class="btn btn-sm btn-outline-info" onclick="refreshGeneralFeedback(<?php echo $submission['id']; ?>)" id="refresh-feedback-btn">
+                                            <i class="fas fa-sync-alt me-1"></i> Yenile
+                                        </button>
+                                    </div>
+                                    <p class="mb-2 text-dark" id="ai-general-feedback-text"><?php echo nl2br(htmlspecialchars($submission['ai_general_feedback'])); ?></p>
+                                    <hr class="my-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <strong>Öğretmen Araçları:</strong> Aşağıdaki sorularda elle puanlama yapabilir veya açık uçlu soruları AI ile yeniden değerlendirebilirsiniz.
+                                    </small>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-secondary bg-light border-0 mb-0">
+                                    <h6 class="text-secondary"><i class="fas fa-tools me-2"></i>Öğretmen Araçları</h6>
+                                    <p class="mb-0 text-dark small">
+                                        <i class="fas fa-check-circle text-success me-1"></i> Her sorunun puanını manuel olarak düzenleyebilirsiniz.<br>
+                                        <i class="fas fa-robot text-warning me-1"></i> Açık uçlu soruları AI ile yeniden değerlendirebilirsiniz.
+                                    </p>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -174,6 +192,44 @@ include '../includes/components/teacher_header.php';
                             </div>
                         <?php endif; ?>
 
+                        <!-- ELLE PUANLAMA VE AI YENİDEN DEĞERLENDİRME -->
+                        <div class="mt-3 p-3 bg-light rounded border">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Elle Puanlama</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="score-<?php echo $ans['id']; ?>" 
+                                               min="0" 
+                                               max="<?php echo $ans['max_points']; ?>" 
+                                               step="0.01"
+                                               value="<?php echo $ans['earned_points']; ?>">
+                                        <span class="input-group-text">/ <?php echo $ans['max_points']; ?></span>
+                                        <button class="btn btn-primary" 
+                                                onclick="updateScore(<?php echo $ans['id']; ?>, <?php echo $ans['max_points']; ?>)">
+                                            <i class="fas fa-save"></i> Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <?php if ($ans['question_type'] == 'text'): ?>
+                                <div class="col-md-6 mt-2 mt-md-0">
+                                    <label class="form-label small fw-bold mb-1">AI Değerlendirme</label>
+                                    <button class="btn btn-warning btn-sm w-100" 
+                                            id="ai-btn-<?php echo $ans['id']; ?>"
+                                            onclick="reEvaluateQuestion(<?php echo $ans['id']; ?>)">
+                                        <i class="fas fa-robot"></i> AI ile Yeniden Değerlendir
+                                    </button>
+                                </div>
+                                <?php else: ?>
+                                <div class="col-md-6 mt-2 mt-md-0">
+                                    <small class="text-muted">AI değerlendirme sadece açık uçlu sorular için kullanılabilir.</small>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -183,3 +239,113 @@ include '../includes/components/teacher_header.php';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function updateScore(answerId, maxPoints) {
+    const scoreInput = document.getElementById('score-' + answerId);
+    const newScore = parseFloat(scoreInput.value);
+    
+    // Validasyon
+    if (isNaN(newScore) || newScore < 0 || newScore > maxPoints) {
+        alert('Puan 0 ile ' + maxPoints + ' arasında olmalı!');
+        return;
+    }
+    
+    if (!confirm('Puanı ' + newScore + ' olarak güncellemek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    // AJAX isteği
+    fetch('update_answer_score.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({answer_id: answerId, score: newScore})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Puan güncellendi!\nYeni Toplam Puan: ' + data.total_score);
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Bir hata oluştu: ' + error);
+    });
+}
+
+function reEvaluateQuestion(answerId) {
+    if (!confirm('Bu soru AI tarafından yeniden değerlendirilecek. Mevcut puan ve geri bildirim değişecektir. Devam edilsin mi?')) {
+        return;
+    }
+    
+    // Loading göster
+    const btn = document.getElementById('ai-btn-' + answerId);
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Değerlendiriliyor...';
+    
+    // AJAX isteği
+    fetch('reevaluate_single_question.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({answer_id: answerId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('AI Response:', data); // Debug için console'a yaz
+        
+        if (data.success) {
+            alert('AI Değerlendirmesi Tamamlandı!\n\nYeni Puan: ' + data.new_score + '\nYeni Toplam: ' + data.total_score + '\n\nGeri Bildirim: ' + data.feedback);
+            location.reload();
+        } else {
+            // Hata mesajını hem alert hem console'da göster
+            console.error('AI Error:', data.message);
+            alert('Hata: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        alert('Bir hata oluştu: ' + error);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function refreshGeneralFeedback(submissionId) {
+    const btn = document.getElementById('refresh-feedback-btn');
+    const originalHTML = btn.innerHTML;
+    const textZone = document.getElementById('ai-general-feedback-text');
+    
+    if (!confirm('Genel değerlendirme raporu, mevcut güncel puanlara göre yeniden oluşturulacak. Devam edilsin mi?')) {
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch('reevaluate_submission_feedback.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({submission_id: submissionId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            textZone.innerHTML = data.feedback.replace(/\n/g, '<br>');
+            alert('Genel değerlendirme güncellendi!');
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Bir hata oluştu: ' + error);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+</script>

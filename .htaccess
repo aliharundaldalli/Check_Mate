@@ -1,43 +1,104 @@
-# Check Mate - Apache Configuration
-# Guvenlik, performans ve URL yeniden yazma
+# ==============================================================================
+# PROJE GENEL YAPILANDIRMASI
+# ==============================================================================
+
+# Dizin listelemeyi engelle
+Options -Indexes
+Options +FollowSymLinks
+
+# Varsayılan Karakter Seti
+AddDefaultCharset UTF-8
+
+# =============================================
+# URL YONLENDIRME (REWRITE ENGINE)
+# =============================================
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    # Localhost'ta alt klasör (check_mate) için ayarlandı.
-    RewriteBase /check_mate/
-    Options -MultiViews
+    RewriteBase /
 
-    # =============================================
-    # URL HANDLERS
-    # =============================================
+    # 1. WWW'yi NON-WWW'ye Yonlendir
+    RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+    RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
-    # .php uzantisini gizle (SEO)
+    # 2. HTTPS'e Zorla (SSL yuklu ise aktif edin)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 3. .php Uzantisini Gizle (Pretty URLs)
+    # Form gonderimleri (POST) bozulmasin diye POST olmayan istekleri yonlendirir
     RewriteCond %{REQUEST_METHOD} !POST
-    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?]
-    RewriteRule ^ %{REQUEST_SCHEME}://%{HTTP_HOST}/check_mate/%1 [R=301,L]
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
+    RewriteRule ^ %1 [R=301,L]
 
-    # .php ekle (Dahili yonlendirme)
+    # Uzantisiz gelen istegi sunucu tarafinda .php dosyasina bagla
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME}\.php -f
-    RewriteRule ^/?(.+)$ $1.php [L]
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.*?)/?$ $1.php [L]
 
-    # Hata sayfalari (Mevcut yapıya uygun olarak ayarlandı)
-    ErrorDocument 403 /check_mate/error.php?code=403
-    ErrorDocument 404 /check_mate/error.php?code=404
+    # Hata sayfalari
+    ErrorDocument 403 /error.php?code=403
+    ErrorDocument 404 /error.php?code=404
 </IfModule>
 
 # =============================================
-# GUVENLIK AYARLARI
+# GUVENLIK BAŞLIKLARI VE AYARLARI
 # =============================================
 
-# Dizin listelemeyi kapat
-Options -Indexes
+# Sunucu bilgilerini gizle
+ServerSignature Off
 
-# Hassas dosyalara erisimi engelle
-<FilesMatch "(config\.php|db\.php|functions\.php|init\.php|\.sql|\.log|\.env)$">
-    Order allow,deny
-    Deny from all
+# Hassas dosyalara erisimi yasakla
+<FilesMatch "(\.htaccess|\.htpasswd|config\.php|database\.php|\.log|\.sql|\.ini|\.env)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
-# Not: <Directory> bloklari burada kullanilmamalidir.
+<ifModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</ifModule>
+
+# ModSecurity istisnaları (Sınav sorularındaki kelimelerin engellenmemesi için)
+<IfModule mod_security.c>
+    SecFilterEngine Off
+    SecFilterScanPOST Off
+</IfModule>
+
+# =============================================
+# PERFORMANS AYARLARI
+# =============================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css
+    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# =============================================
+# CPANEL PHP HANDLER
+# =============================================
+# Bu bolum cPanel tarafindan otomatik eklenir, mevcut sisteminize gore düzenleyin.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php83___lsphp .php .php8 .phtml
+</IfModule>

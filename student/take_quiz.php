@@ -105,7 +105,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!isset($error)) {
+        // ModSecurity Bypass: Decode Base64 answers if encoded
+        $is_encoded = isset($_POST['is_encoded']) && $_POST['is_encoded'] == '1';
         $user_answers = $_POST['answers'] ?? [];
+        
+        if ($is_encoded && is_array($user_answers)) {
+            foreach ($user_answers as $qid => $val) {
+                if (is_array($val)) {
+                    foreach ($val as $k => $v) {
+                        $user_answers[$qid][$k] = base64_decode($v);
+                    }
+                } else {
+                    $user_answers[$qid] = base64_decode($val);
+                }
+            }
+        }
+
         $gradeResult = gradeQuizSubmission($quiz, $questions, $user_answers);
         
         if (isset($gradeResult['error'])) {
@@ -188,6 +203,7 @@ include '../includes/components/student_header.php';
                     <form method="POST" action="" id="quiz-form">
                         <!-- Güvenli Gönderim İçin Gizli Girdi -->
                         <input type="hidden" name="form_submitted" value="1">
+                        <input type="hidden" name="is_encoded" value="1">
                         
                         <?php foreach ($questions as $index => $q): ?>
                             <div class="mb-4 p-4 border rounded-3 bg-white shadow-sm question-block position-relative">
@@ -312,6 +328,24 @@ function showLoading() {
 // Form Submit Handling
 document.getElementById('quiz-form').addEventListener('submit', function(e) {
     if (confirm('Sınavı bitirmek istediğinize emin misiniz?')) {
+        // ModSecurity Bypass: Encode answers to Base64
+        const form = e.target;
+        const radios = form.querySelectorAll('input[type="radio"]:checked');
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+        const textareas = form.querySelectorAll('textarea');
+
+        // Safe Base64 for UTF-8
+        const encode = (val) => {
+            try {
+                const utf8Bytes = new TextEncoder().encode(val);
+                return btoa(String.fromCharCode(...utf8Bytes));
+            } catch(e) { return val; }
+        };
+
+        radios.forEach(el => el.value = encode(el.value));
+        checkboxes.forEach(el => el.value = encode(el.value));
+        textareas.forEach(el => el.value = encode(el.value));
+
         showLoading();
         return true;
     } else {

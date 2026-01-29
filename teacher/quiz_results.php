@@ -124,6 +124,14 @@ include '../includes/components/teacher_header.php';
                     <i class="fas fa-magic me-2"></i> Genel Değerlendirme Raporu Oluştur (AI)
                 </button>
             </form>
+            
+            <!-- PDF İndir Butonu (Sadece rapor varsa göster) -->
+            <?php if (!empty($quiz['ai_analysis'])): ?>
+                <a href="generate_quiz_report.php?id=<?php echo $quiz_id; ?>" class="btn btn-success shadow-sm ms-2" target="_blank">
+                    <i class="fas fa-file-pdf me-2"></i> PDF Rapor İndir
+                </a>
+            <?php endif; ?>
+            
             <a href="quizzes.php" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-arrow-left me-1"></i> Geri Dön
             </a>
@@ -132,6 +140,19 @@ include '../includes/components/teacher_header.php';
 
     <?php if (isset($error)) display_message($error, 'danger'); ?>
     <?php if (isset($_GET['analyzed'])) display_message('Sınıf analizi başarıyla oluşturuldu.', 'success'); ?>
+
+    <!-- Print-Only Header (PDF için) -->
+    <div class="print-only-header" style="display: none;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #6f42c1; padding-bottom: 15px;">
+            <h2 style="color: #6f42c1; margin: 0;"><?php echo htmlspecialchars($quiz['title']); ?></h2>
+            <p style="margin: 5px 0; color: #666;">
+                <strong>Ders:</strong> <?php echo htmlspecialchars($quiz['course_name']); ?> (<?php echo htmlspecialchars($quiz['course_code']); ?>)
+            </p>
+            <p style="margin: 5px 0; color: #666;">
+                <strong>Rapor Tarihi:</strong> <?php echo date('d.m.Y H:i'); ?>
+            </p>
+        </div>
+    </div>
 
     <!-- AI ANALİZ RAPORU KARTI -->
     <?php if (!empty($quiz['ai_analysis'])): 
@@ -210,6 +231,87 @@ include '../includes/components/teacher_header.php';
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; endif; ?>
+
+    <!-- ÖNERİLEN TELAFİ ETKİNLİKLERİ -->
+    <?php 
+    // Basitleştirilmiş kontrol
+    if (!empty($quiz['ai_analysis'])): 
+        $analysis_data = json_decode($quiz['ai_analysis'], true);
+        if ($analysis_data && !empty($analysis_data['remedial_activities'])):
+    ?>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-lightbulb me-2"></i>Önerilen Telafi Etkinlikleri
+                    </h5>
+                    <small class="text-muted">AI tarafından öğrencilerin zorlandığı konulara yönelik öneriler</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <?php foreach ($analysis_data['remedial_activities'] as $activity): ?>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #ffc107 !important;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-dark mb-0">
+                                                <i class="fas fa-bookmark me-2 text-warning"></i>
+                                                <?php echo htmlspecialchars($activity['topic'] ?? 'Konu belirtilmemiş'); ?>
+                                            </h6>
+                                            <span class="badge bg-<?php 
+                                                $diff = strtolower($activity['difficulty'] ?? 'orta');
+                                                echo $diff == 'kolay' ? 'success' : ($diff == 'zor' ? 'danger' : 'warning');
+                                            ?> text-white">
+                                                <?php echo ucfirst($activity['difficulty'] ?? 'Orta'); ?>
+                                            </span>
+                                        </div>
+                                        <p class="text-muted small mb-2">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <?php echo htmlspecialchars($activity['description'] ?? ''); ?>
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fas fa-<?php 
+                                                    $type = strtolower($activity['activity_type'] ?? 'quiz');
+                                                    // İkon belirleme
+                                                    if (strpos($type, 'quiz') !== false) {
+                                                        echo 'question-circle';
+                                                    } elseif (strpos($type, 'reading') !== false || strpos($type, 'okuma') !== false) {
+                                                        echo 'book';
+                                                    } else {
+                                                        echo 'pencil-alt';
+                                                    }
+                                                ?> me-1"></i>
+                                                <?php 
+                                                    // Türkçe etiket
+                                                    $type_label = $activity['activity_type'] ?? 'Quiz';
+                                                    if (strpos($type, 'quiz') !== false) {
+                                                        echo 'Quiz';
+                                                    } elseif (strpos($type, 'exercise') !== false) {
+                                                        echo 'Alıştırma';
+                                                    } elseif (strpos($type, 'reading') !== false) {
+                                                        echo 'Okuma';
+                                                    } else {
+                                                        echo ucfirst($type_label);
+                                                    }
+                                                ?>
+                                            </span>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <?php echo htmlspecialchars($activity['estimated_time'] ?? '15 dakika'); ?>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -296,5 +398,78 @@ include '../includes/components/teacher_header.php';
         </div>
     </div>
 </div>
+
+<!-- Print-Friendly CSS for PDF Export -->
+<style media="print">
+    /* Sadece raporu yazdır */
+    body * { visibility: hidden; }
+    
+    /* Print Header'ı göster */
+    .print-only-header,
+    .print-only-header * {
+        visibility: visible;
+        display: block !important;
+    }
+    
+    /* AI Raporu ve Telafi Etkinliklerini göster */
+    .card.border-purple,
+    .card.border-purple *,
+    .card.border-warning,
+    .card.border-warning * {
+        visibility: visible;
+    }
+    
+    /* Sayfa düzeni */
+    @page {
+        size: A4;
+        margin: 2cm;
+    }
+    
+    /* Raporları sayfa başından başlat */
+    .print-only-header {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    .card.border-purple {
+        position: absolute;
+        left: 0;
+        top: 120px;
+        width: 100%;
+        box-shadow: none !important;
+        page-break-after: auto;
+        page-break-inside: avoid;
+    }
+    
+    .card.border-warning {
+        position: absolute;
+        left: 0;
+        top: auto;
+        width: 100%;
+        margin-top: 20px;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    /* Butonları gizle */
+    button, .btn, nav, .breadcrumb { display: none !important; }
+    
+    /* Renkli kutuları koru */
+    .bg-success-subtle { background-color: #d1e7dd !important; }
+    .bg-danger-subtle { background-color: #f8d7da !important; }
+    .bg-info-subtle { background-color: #cfe2ff !important; }
+    
+    /* Kartları düzgün göster */
+    .card-body { padding: 15px !important; }
+    
+    /* Başlıklar */
+    h5, h6 { color: #000 !important; }
+    
+    /* Border renklerini koru */
+    .border-purple { border-left: 5px solid #6f42c1 !important; }
+    .border-warning { border-left: 5px solid #ffc107 !important; }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
