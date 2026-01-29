@@ -81,25 +81,42 @@ include '../includes/components/student_header.php';
             </div>
         <?php else: ?>
             <?php foreach ($quizzes as $quiz): ?>
+                <?php 
+                // Expiration Check
+                $now = new DateTime();
+                $until = !empty($quiz['available_until']) ? new DateTime($quiz['available_until']) : null;
+                $is_expired = ($until && $now > $until);
+                ?>
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm border-0">
+                    <div class="card h-100 shadow-sm border-0 <?php echo $is_expired ? 'bg-light' : ''; ?>">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="badge bg-secondary"><?php echo htmlspecialchars($quiz['course_code']); ?></span>
                                 <?php if ($quiz['submission_status'] == 'completed' || $quiz['submission_status'] == 'graded'): ?>
                                     <span class="badge bg-success">Tamamlandı</span>
+                                <?php elseif ($is_expired): ?>
+                                    <span class="badge bg-dark">Süresi Doldu</span>
                                 <?php else: ?>
                                     <span class="badge bg-primary">Aktif</span>
                                 <?php endif; ?>
                             </div>
                             
-                            <h5 class="card-title fw-bold mb-1"><?php echo htmlspecialchars($quiz['title']); ?></h5>
+                            <h5 class="card-title fw-bold mb-1 <?php echo $is_expired ? 'text-muted' : ''; ?>">
+                                <?php echo htmlspecialchars($quiz['title']); ?>
+                            </h5>
                             <p class="text-muted small mb-3"><?php echo htmlspecialchars($quiz['course_name']); ?></p>
                             
                             <?php if ($quiz['description']): ?>
                                 <p class="card-text text-muted mb-3 small">
                                     <?php echo htmlspecialchars(substr($quiz['description'], 0, 100)) . (strlen($quiz['description']) > 100 ? '...' : ''); ?>
                                 </p>
+                            <?php endif; ?>
+
+                            <?php if ($until): ?>
+                                <div class="mb-3 small <?php echo $is_expired ? 'text-danger fw-bold' : 'text-primary'; ?>">
+                                    <i class="far fa-clock me-1"></i>
+                                    Son Tarih: <?php echo $until->format('d.m.Y H:i'); ?>
+                                </div>
                             <?php endif; ?>
                             
                             <div class="d-grid mt-auto">
@@ -110,6 +127,10 @@ include '../includes/components/student_header.php';
                                     <div class="text-center mt-2 small text-muted">
                                         Puan: <strong><?php echo $quiz['score']; ?></strong>
                                     </div>
+                                <?php elseif ($is_expired): ?>
+                                    <button class="btn btn-secondary" disabled>
+                                        <i class="fas fa-ban me-1"></i> Süre Doldu
+                                    </button>
                                 <?php else: ?>
                                     <a href="take_quiz.php?id=<?php echo $quiz['id']; ?>" class="btn btn-primary">
                                         <i class="fas fa-play me-1"></i> Sınava Başla

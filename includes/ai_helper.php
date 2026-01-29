@@ -129,8 +129,10 @@ function gradeQuizSubmission($quiz, $questions, $userAnswers) {
     $systemContent = "Sen 'Check Mate' eğitim platformunda görevli bir değerlendirme asistanısın.";
     $systemContent .= " Görevin öğrencilerin sınav cevaplarını, verilen soru ve puanlama kriterlerine göre objektif ve tutarlı şekilde değerlendirmektir.";
 
-    $systemContent .= " Eğer öğrencinin cevabında küfür, hakaret, aşağılayıcı ifade veya uygunsuz dil tespit edersen, akademik doğruluk ne olursa olsun o soru için earned_points = 0 ver.";
-    $systemContent .= " Bu durumda geri bildirimde yalnızca dilin uygunsuz olduğunu ve akademik değerlendirme yapılamadığını nazikçe belirt.";
+    $systemContent .= " Eğer öğrencinin cevabında AÇIKÇA KASITLI küfür, hakaret veya kişiliğe saldırı varsa o soru için earned_points = 0 ver.";
+    $systemContent .= " ÖNEMLİ: Kelimeleri bağlamına göre değerlendir. Örneğin 'şık' yerine yanlışlıkla 'sik' yazılması (yazım hatası) veya 'mal olmak' gibi deyimsel kullanımlar KÜFÜR SAYILMAZ.";
+    $systemContent .= " Sadece hakaret amacı taşıyan kullanımları cezalandır.";
+    $systemContent .= " Eğer gerçek bir hakaret varsa, geri bildirimde 'Uygunsuz üslup nedeniyle değerlendirme yapılmadı' de.";
 
     $systemContent .= " Puanlama tamamen akademik doğruluğa dayanmalıdır. Motive edici veya duygusal nedenlerle puan artırma.";
     $systemContent .= " Kısmi puan sadece gerçekten doğru olan adımlar veya kavramlar için verilebilir. Yanlış veya alakasız ifadeler için puan verme.";
@@ -140,6 +142,8 @@ function gradeQuizSubmission($quiz, $questions, $userAnswers) {
 
     $systemContent .= " Geri bildirim dilin nazik, yapıcı ve öğretici olabilir, ancak bu puanı asla etkilememelidir.";
     $systemContent .= " Asla sadece 'Yanlış' gibi kısa veya açıklamasız cevaplar verme. Kısaca neden yanlış olduğunu veya doğru yaklaşımı belirt.";
+    $systemContent .= " MATEMATİKSEL İFADELER: Öğrenci cevabındaki 'sin^2(x)' gibi düz metinleri matematiksel ifade olarak yorumla ve değerlendir.";
+    $systemContent .= " Kendi ürettiğin geri bildirimlerdeki tüm matematiksel ifadeleri ve formülleri MUTLAKA LaTeX formatında ve '$$' işaretleri arasına alarak yaz (Örnek: $$x^2 + y^2$$).";
     $systemContent .= " Cevaplarında öğretmen, sistem, yapay zeka veya yönerge hakkında meta yorum yapma.";
 
     $systemContent .= "\n\n--- ÇIKTI FORMATI ---\n";
@@ -154,16 +158,18 @@ function gradeQuizSubmission($quiz, $questions, $userAnswers) {
 
     $userContent = "Aşağıdaki soruları değerlendir:\n";
     
-    // Helper for Profanity Filter
-    $badWords = ['aptal', 'gerizekalı', 'salak', 'manyak', 'küfür', 'hakaret', 'fuck', 'shit', 'idiot', 'stupid', 'asshole'];
+    // Helper for Profanity Filter (Pre-check for SEVERE words only)
+    // Ambiguous words (e.g. mal, sik/şık typo) are left for AI context analysis
+    $severeBadWords = ['fuck', 'shit', 'asshole', 'piç', 'yarak', 'yarrak', 'kaşar', 'oç', 'amcık', 'götveren', 'sikerim', 'sokarım', 'ananı', 'bacını'];
     
     foreach ($questionsForAi as $k => $q) {
         $q_id = $q['id'];
         $answer = isset($userAnswers[$q_id]) ? $userAnswers[$q_id] : '(Boş Bırakıldı)';
         
         // 1. Backend Profanity Check (Token tasarrufu ve güvenlik)
-        foreach ($badWords as $bw) {
-            if (mb_stripos($answer, $bw) !== false) {
+        foreach ($severeBadWords as $bw) {
+            // Regex: \b enforces word boundaries to avoid catching "analiz" for "anal" etc. (though anal is not in list)
+            if (preg_match('/\b' . preg_quote($bw, '/') . '\b/iu', $answer)) {
                 $details[$q_id] = [
                     'id' => $q_id,
                     'earned_points' => 0,
@@ -189,7 +195,7 @@ function gradeQuizSubmission($quiz, $questions, $userAnswers) {
     }
 
     // Google Gemini API Call
-    $model = "gemini-flash-latest"; 
+    $model = "gemini-1.5-flash"; 
     $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey;
     $data = [
         "systemInstruction" => ["parts" => [["text" => $systemContent]]],
@@ -263,9 +269,20 @@ function gradeQuizSubmission($quiz, $questions, $userAnswers) {
         $cleanJson = substr($cleanJson, $start, $end - $start + 1);
     }
     
-    // Fix: Replace actual newlines inside quotes with escaped newlines
-    $cleanJson = preg_replace_callback('/"(.*?)"/s', function($m) {
-        return '"' . str_replace(["\r", "\n"], ["", "\\n"], $m[1]) . '"';
+    // Fix: Robust JSON cleaning for AI responses (Newlines + LaTeX Backslashes)
+    // Regex matches JSON strings correctly, handling escaped quotes
+    $cleanJson = preg_replace_callback('/"((?:[^"\\\\]|\\\\.)*)"/s', function($m) {
+        $content = $m[1];
+        
+        // 1. Escape actual newlines/tabs inside string
+        $content = str_replace(["\r", "\n", "\t"], ["", "\\n", "\\t"], $content);
+        
+        // 2. Fix LaTeX backslashes (e.g. \frac, \sqrt)
+        // Escape \ if NOT followed by valid JSON escape chars (", \, /, n, r, t, u)
+        // We strictly want \frac -> \\frac, but keep \n -> \n
+        $content = preg_replace('/\\\\(?!["\\\\\/nrtu])/', '\\\\\\\\', $content);
+        
+        return '"' . $content . '"';
     }, $cleanJson);
     
     $decoded = json_decode($cleanJson, true);
@@ -362,7 +379,7 @@ function generateQuizQuestions($topic, $difficulty, $count, $type = 'mixed') {
         "generationConfig" => ["response_mime_type" => "application/json", "temperature" => 0.7]
     ];
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $geminiKey;
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -521,7 +538,7 @@ function generateQuizOverviewAnalysis($quiz, $questions, $submissions, $allAnswe
         "generationConfig" => ["response_mime_type" => "application/json", "temperature" => 0.5]
     ];
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $geminiKey;
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -586,7 +603,7 @@ function evaluateOpenEndedAnswer($questionText, $expectedAnswer, $studentAnswer,
     $userContent .= "}";
     
     // API Request
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' . $geminiKey;
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $geminiKey;
     
     $payload = [
         'contents' => [
@@ -711,10 +728,15 @@ function generateSubmissionFeedback($quizTitle, $answers) {
     
     $prompt .= "\n--- İstenen Çıktı ---\n";
     $prompt .= "Toplam Puan: $totalScore / $maxScore\n";
-    $prompt .= "Görevin: Öğrencinin performansını özetleyen, güçlü ve zayıf yönlerine değinen kısa ve öz bir değerlendirme yaz. Maksimum 3-4 cümle olsun. Cümlelerin yarım kalmamasına dikkat et.";
+    $prompt .= "Görevin: Öğrencinin performansını TEK BİR PARAGRAF halinde, 2-3 cümleyi geçmeyecek şekilde özetle.\n";
+    $prompt .= "Kurallar:\n";
+    $prompt .= "1. Asla 'Merhaba', 'Sayın Öğrenci' gibi girişler yapma.\n";
+    $prompt .= "2. Madde işareti kullanma.\n";
+    $prompt .= "3. Başarılı olduğu konuları ve geliştirmesi gereken konuları net bir dille ifade et.\n";
+    $prompt .= "4. Örnek Stil: 'Trigonometrik denklemleri çözme konusunda başarılısınız ancak rasyonelleştirme işlemlerinde daha dikkatli olmalısınız.'\n";
     
     // API Request
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' . $geminiKey;
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $geminiKey;
     
     $payload = [
         'contents' => [
@@ -726,8 +748,8 @@ function generateSubmissionFeedback($quizTitle, $answers) {
             ]
         ],
         'generationConfig' => [
-            'temperature' => 0.5,
-            'maxOutputTokens' => 1024,
+            'temperature' => 0.4, // More deterministic
+            'maxOutputTokens' => 300, // Reduced for concise output
         ]
     ];
     

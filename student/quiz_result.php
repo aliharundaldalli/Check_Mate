@@ -152,7 +152,7 @@ include '../includes/components/student_header.php';
                         </div>
 
                         <?php if ($ans['ai_feedback']): ?>
-                            <div class="mt-2 p-2 rounded <?php echo $bgClass; ?>">
+                            <div class="mt-2 p-2 rounded <?php echo $bgClass; ?>" style="overflow-x: auto; word-wrap: break-word;">
                                 <small class="fw-bold"><i class="fas fa-comment-dots me-1"></i>Değerlendirme Notu:</small><br>
                                 <?php echo nl2br(htmlspecialchars($ans['ai_feedback'])); ?>
                             </div>
@@ -169,6 +169,20 @@ include '../includes/components/student_header.php';
         </div>
     </div>
 </div>
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <?php include '../includes/components/shared_footer.php'; ?>

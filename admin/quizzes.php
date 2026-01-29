@@ -100,6 +100,9 @@ include '../includes/components/admin_header.php';
                                         <a href="quiz_submissions.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-info text-white" title="Katılımları Gör">
                                             <i class="fas fa-users"></i> Sonuçlar
                                         </a>
+                                        <a href="edit_quiz.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-primary" title="Düzenle">
+                                            <i class="fas fa-edit"></i> Düzenle
+                                        </a>
                                         <a href="?delete_id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Bu sınavı silmek istediğinize emin misiniz? Tüm öğrenci cevapları da silinecektir!');" title="Sınavı Sil">
                                             <i class="fas fa-trash"></i>
                                         </a>

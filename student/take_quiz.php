@@ -95,6 +95,9 @@ try {
 // Buton disabled olduğu için isset($_POST['submit_quiz']) kontrolü bazen false dönebilir. 
 // Bu yüzden sadece REQUEST_METHOD kontrolü yapıyoruz.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // FIX: Increase limits for AI operations
+    set_time_limit(300); // 5 minutes
+    ini_set('memory_limit', '512M');
     
     if ($time_limit > 0) {
         $allowed = ($time_limit * 60) + 15; // 15 saniye tolerans
@@ -443,7 +446,13 @@ input, textarea {
 
 .math-editor-container textarea { font-family: 'Consolas', monospace; font-size: 1rem; }
 .math-preview { background-color: #f8f9fa; border-left: 4px solid #3498db !important; }
-.question-block { transition: all 0.3s ease; border-left: 5px solid transparent !important; }
+.question-block { 
+    transition: all 0.3s ease; 
+    border-left: 5px solid transparent !important; 
+    overflow-x: auto; /* Fix for mobile overflow */
+    word-wrap: break-word;
+}
+.question-block img { max-width: 100%; height: auto; } /* Fix for large images */
 .question-block:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; border-left-color: #3498db !important; transform: translateY(-2px); }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 .pulse-animation { animation: pulse 1s infinite; }

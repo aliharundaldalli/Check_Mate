@@ -1,5 +1,5 @@
 <?php
-// teacher/edit_quiz.php - Sınav Düzenle
+// admin/edit_quiz.php - Sınav Düzenle (Admin)
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -13,14 +13,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $auth = new Auth();
-if (!$auth->checkRole('teacher')) {
-    redirect('../index.php');
+if (!$auth->checkRole('admin')) {
+    redirect('../login.php');
     exit;
 }
 
 $database = new Database();
 $db = $database->getConnection();
-$teacher_id = $_SESSION['user_id'];
+// Admin ID is not needed for ownership check
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     redirect('quizzes.php');
@@ -32,13 +32,13 @@ $quiz = [];
 $questions = [];
 
 try {
-    // Sınav Bilgileri
-    $stmt = $db->prepare("SELECT * FROM quizzes WHERE id = :id AND created_by = :tid");
-    $stmt->execute([':id' => $quiz_id, ':tid' => $teacher_id]);
+    // Sınav Bilgileri (Admin can edit ALL quizzes, so removed created_by check)
+    $stmt = $db->prepare("SELECT * FROM quizzes WHERE id = :id");
+    $stmt->execute([':id' => $quiz_id]);
     $quiz = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$quiz) {
-        show_message('Sınav bulunamadı veya yetkiniz yok.', 'danger');
+        show_message('Sınav bulunamadı.', 'danger');
         redirect('quizzes.php');
         exit;
     }
@@ -238,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = "Sınavı Düzenle - " . $quiz['title'];
-include '../includes/components/teacher_header.php';
+include '../includes/components/admin_header.php';
 ?>
 
 <div class="container-fluid py-4">
@@ -246,7 +246,7 @@ include '../includes/components/teacher_header.php';
         <div class="col-lg-10">
             <div class="card shadow">
                 <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                     <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Sınav Düzenle</h5>
+                     <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Sınav Düzenle (Admin Modu)</h5>
                      <a href="quizzes.php" class="btn btn-sm btn-dark">Geri Dön</a>
                 </div>
                 <div class="card-body">

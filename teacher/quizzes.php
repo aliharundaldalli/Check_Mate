@@ -99,7 +99,8 @@ include '../includes/components/teacher_header.php';
                     </a>
                 </div>
             <?php else: ?>
-                <div class="table-responsive">
+                <!-- Desktop Table View -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
@@ -131,18 +132,7 @@ include '../includes/components/teacher_header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo date('d.m.Y H:i', strtotime($quiz['created_at'])); ?></td>
-                                    <div class="d-block d-md-none mt-2"> <!-- Mobile view actions -->
-                                        <a href="edit_quiz.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-primary w-100 mb-1">
-                                            <i class="fas fa-edit me-1"></i> Düzenle
-                                        </a>
-                                        <a href="quiz_results.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-info w-100 mb-1 text-white">
-                                            <i class="fas fa-chart-bar me-1"></i> Sonuçlar
-                                        </a>
-                                         <a href="quizzes.php?delete=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-danger w-100" onclick="return confirm('Bu sınavı silmek istediğinize emin misiniz?');">
-                                            <i class="fas fa-trash me-1"></i> Sil
-                                        </a>
-                                    </div>
-                                    <td class="text-end d-none d-md-table-cell">
+                                    <td class="text-end">
                                         <div class="btn-group">
                                             <a href="quiz_results.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-outline-info" title="Sonuçlar">
                                                 <i class="fas fa-chart-bar"></i>
@@ -159,6 +149,56 @@ include '../includes/components/teacher_header.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="d-block d-md-none">
+                    <?php foreach ($quizzes as $quiz): ?>
+                        <div class="card mb-3 shadow-sm border-start border-4 <?php echo $quiz['is_active'] ? 'border-success' : 'border-danger'; ?>">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title h6 fw-bold mb-0 text-truncate" style="max-width: 70%;">
+                                        <?php echo htmlspecialchars($quiz['title']); ?>
+                                    </h5>
+                                    <?php if ($quiz['is_active']): ?>
+                                        <span class="badge bg-success">Aktif</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">Pasif</span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="card-text small text-muted mb-2">
+                                    <?php echo htmlspecialchars(substr($quiz['description'], 0, 80)) . '...'; ?>
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <i class="fas fa-book text-secondary me-1"></i>
+                                        <small class="fw-bold"><?php echo htmlspecialchars($quiz['course_code']); ?></small>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar-alt me-1"></i>
+                                        <?php echo date('d.m.Y', strtotime($quiz['created_at'])); ?>
+                                    </small>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <a href="edit_quiz.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                    <div class="col-4">
+                                        <a href="quiz_results.php?id=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-outline-info w-100">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </a>
+                                    </div>
+                                    <div class="col-4">
+                                        <a href="quizzes.php?delete=<?php echo $quiz['id']; ?>" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Bu sınavı silmek istediğinize emin misiniz?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>

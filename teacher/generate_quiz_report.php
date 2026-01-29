@@ -229,18 +229,33 @@ if (!empty($analysis['remedial_activities'])) {
     $pdf->Ln(2);
     
     // Tablo başlıkları - Yeniden düzenlendi
+    // Columns: Konu (90), Zorluk (30), Tür (35), Süre (25) = 180 Total width
     $pdf->SetFont('dejavusans', 'B', 9);
     $pdf->SetFillColor(255, 193, 7);
     $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell(70, 7, 'Konu', 1, 0, 'C', true);
+    $pdf->Cell(90, 7, 'Konu', 1, 0, 'C', true);
     $pdf->Cell(30, 7, 'Zorluk', 1, 0, 'C', true);
-    $pdf->Cell(40, 7, 'Tür', 1, 0, 'C', true);
-    $pdf->Cell(40, 7, 'Süre', 1, 1, 'C', true);
+    $pdf->Cell(35, 7, 'Tür', 1, 0, 'C', true);
+    $pdf->Cell(25, 7, 'Süre', 1, 1, 'C', true);
     
     // Etkinlikler - Her satır için açıklama alt satırda
     $pdf->SetFont('dejavusans', '', 8);
     $pdf->SetFillColor(255, 248, 225);
     
+    // Basit LaTeX Temizleyici Helper
+    $cleanLatex = function($text) {
+        $text = str_replace(
+            ['$', '\\sin', '\\cos', '\\tan', '\\cot', '\\ln', '\\log', '\\sqrt', '\\cdot', '\\times', '\\div'], 
+            ['', 'sin', 'cos', 'tan', 'cot', 'ln', 'log', '√', '·', '×', '÷'], 
+            $text
+        );
+        // Remove other backslashes if any remain (e.g. \text{})
+        $text = str_replace('\\', '', $text);
+        // Simple fractions: \frac{a}{b} -> a/b (Regex is risky for nested, but fine for simple)
+        $text = preg_replace('/frac\{(.*?)\}\{(.*?)\}/', '$1/$2', $text);
+        return $text;
+    };
+
     foreach ($analysis['remedial_activities'] as $i => $activity) {
         $fill = $i % 2 == 0;
         
@@ -250,16 +265,19 @@ if (!empty($analysis['remedial_activities'])) {
         elseif (strpos(strtolower($type_tr), 'reading') !== false) $type_tr = 'Okuma';
         elseif (strpos(strtolower($type_tr), 'quiz') !== false) $type_tr = 'Quiz';
         
+        // Veri temizliği (LaTeX -> Text)
+        $topic = $cleanLatex($activity['topic'] ?? '');
+        $description = $cleanLatex($activity['description'] ?? '');
+
         // Ana bilgiler
-        $pdf->Cell(70, 8, $activity['topic'] ?? '', 1, 0, 'L', $fill);
+        $pdf->Cell(90, 8, $topic, 1, 0, 'L', $fill); // Konu Width 90
         $pdf->Cell(30, 8, ucfirst($activity['difficulty'] ?? 'Orta'), 1, 0, 'C', $fill);
-        $pdf->Cell(40, 8, $type_tr, 1, 0, 'C', $fill);
-        $pdf->Cell(40, 8, $activity['estimated_time'] ?? '15 dk', 1, 1, 'C', $fill);
+        $pdf->Cell(35, 8, $type_tr, 1, 0, 'C', $fill); // Tür Width 35
+        $pdf->Cell(25, 8, $activity['estimated_time'] ?? '15 dk', 1, 1, 'C', $fill); // Süre Width 25
         
         // Açıklama - Alt satırda, tüm genişlikte
         $pdf->SetFont('dejavusans', 'I', 7);
         $pdf->SetFillColor(255, 252, 240);
-        $description = $activity['description'] ?? '';
         $pdf->MultiCell(180, 5, '> ' . $description, 1, 'L', $fill);
         $pdf->SetFont('dejavusans', '', 8);
     }
